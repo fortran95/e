@@ -1,0 +1,10 @@
+E
+
+The E Project is designed to be a system, that runs on Linux, to provide
+cryptographic protection to certain communications with best confidentiality and
+plausible deniability.
+
+Like GnuPG and OpenSSL, E runs under shell with commands like:
+
+1) e encrypt --file PLAINTEXT --key KEYFILE [--output OUTPUT FILE]
+2) e decrypt --file CIPHERTEXT --key KEYFILE [--output OUTPUT FILE]
