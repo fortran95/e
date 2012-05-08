@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from optparse import OptionParser,OptionGroup
+from esymmetric import *
 
 op = OptionParser()
 
