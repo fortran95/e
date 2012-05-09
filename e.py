@@ -17,8 +17,11 @@ op.add_option_group(group_symmetric)
 
 # Read verbose.
 if options.symmetric == True:
-    print "Will do symmetric jobs."
+    #print "Will do symmetric jobs."
     if options.new == True:
-        print "Will generate a new peerkey."
+        #print "Will generate a new peerkey."
+        sym = symmetric()
+        print sym.key
+        
 else:
     print "No verbose options received, not knowing what to do.\nYou may ask for help by adding --help option."

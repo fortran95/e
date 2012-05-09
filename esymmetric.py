@@ -2,11 +2,13 @@ import random,hashlib,hmac,M2Crypto
 from Crypto.Cipher import *
 
 class symmetric(object):
+    version = 0.0
     key = ''
-    def __init__(self):
-        pass
-    def generate(self):
-        self.key = M2Crypto.Rand.rand_bytes(72)
+    def __init__(self,key=''):
+        if len(key)<72:
+            self.key = M2Crypto.Rand.rand_bytes(72)
+        else:
+            self.key = key
     def encrypt(self,plaintext):
         if len(self.key)<72:
             return False
@@ -40,7 +42,6 @@ class symmetric(object):
         calc_hmac = hmac.HMAC(hmackey,src,hashlib.sha512).digest()
         
         if calc_hmac != hmacvalue:
-            print 'HMAC not passed.'
             return False
         
         cipher1 = Blowfish.new(self.key[0:16], Blowfish.MODE_CBC,iv[0:8])
@@ -78,5 +79,5 @@ class symmetric(object):
 
 if __name__ == '__main__':
     s = symmetric()
-    s.generate()
-    print s.decrypt(s.encrypt('google'))
+    assert(s.decrypt(s.encrypt('hello')),'hello')
+    
