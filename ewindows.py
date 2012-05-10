@@ -2,9 +2,9 @@ from Tkinter import *
 
 dlgReturn = -1
 class ChoosingDialog(Frame):
-    def createWidgets(self,keys):
+    def createWidgets(self,keys,label):
         self.lbl = Label(self)
-        self.lbl['text'] = 'You are going to sign a new transfer-key.\nPlease select the identifing PGP secret key that you want to use.\n'
+        self.lbl['text'] = label
         self.lbl.pack()
         
         self.buttons = []
@@ -28,17 +28,18 @@ class ChoosingDialog(Frame):
         self.quitbutton["command"] = self.quit
         self.quitbutton.pack()
 
-    def __init__(self, keys, master=None):
+    def __init__(self, keys, master=None, label=''):
         Frame.__init__(self, master)
         self.pack()
-        self.createWidgets(keys)
+        self.createWidgets(keys,label)
 
-def keySelect(keys):
+def keySelect(keys,title,description):
     global dlgReturn
+    dlgReturn = -1
     root = Tk()
-    root.title('Select your identifing secret key')
+    root.title(title)
     
-    app = ChoosingDialog(keys,master=root)
+    app = ChoosingDialog(keys,master=root,label=description)
     root.update_idletasks()
     
     w = root.winfo_width()
