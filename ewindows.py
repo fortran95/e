@@ -4,30 +4,40 @@ from Tkinter import *
 dlgReturn = -1
 class LoadingKeyDialog(object):
         
-    def __init__(self,master=None,screeninfo=''):
+    def __init__(self,master=None,screeninfo='',valid=False):
         def accept(m=master):
             global dlgReturn
             dlgReturn = 1
             m.quit()
         self.screen = Text(master)
         self.screen['width'] = 70
-        self.screen['height'] = 20
+        self.screen['height'] = 15
         self.screen['background'] = 'Black'
         self.screen['foreground'] = 'Green'
         self.screen.insert(END,screeninfo)
         self.screen.grid(row=0,column=0,columnspan=2)
         
+        self.keystatus = Label(master)
+        if valid:
+            self.keystatus['text'] = '此密钥已经通过数字签名检验，身份认证有效'
+            self.keystatus['bg'] = '#0A0'
+        else:
+            self.keystatus['text'] = '此密钥不携带有效的数字签名，身份认证无效'
+            self.keystatus['bg'] = '#A00'
+        self.keystatus['fg'] = '#FFF'
+        self.keystatus['borderwidth'] = 1
+        self.keystatus.grid(row=1,column=0,columnspan=2,sticky=N+E+W+S)
+        
         self.lbl = Label(master)
         self.lbl['text'] = "您是否允许接收此密钥？"
-        self.lbl.grid(row=1,column=0,columnspan=2)
+        self.lbl.grid(row=2,column=0,columnspan=2)
         
         self.yesbutton = Button(master)
         self.yesbutton["text"] = "允许"
         self.yesbutton["foreground"] = "#0A0"
-        #self.yesbutton["width"] = 60
         self.yesbutton["pady"] = 10
         self.yesbutton["command"] = accept
-        self.yesbutton.grid(row=2,column=0,sticky=W+E+N+S)
+        self.yesbutton.grid(row=3,column=0,sticky=W+E+N+S)
         
         self.nobutton = Button(master)
         self.nobutton["text"] = "拒绝"
@@ -35,7 +45,7 @@ class LoadingKeyDialog(object):
         #self.nobutton["width"] = 60
         self.nobutton["pady"] = 10
         self.nobutton["command"] = master.quit
-        self.nobutton.grid(row=2,column=1,sticky=W+E+N+S)
+        self.nobutton.grid(row=3,column=1,sticky=W+E+N+S)
         
 class ChoosingDialog(Frame):
     def createWidgets(self,keys,label):
@@ -73,7 +83,7 @@ def loadKey(info):
     dlgReturn = -1
     root = Tk()
     root.title("收到新的密钥")
-    app = LoadingKeyDialog(root,screeninfo=info)
+    app = LoadingKeyDialog(root,screeninfo=info['text'],valid=info['sign'])
     root.mainloop()
     root.destroy()
     return dlgReturn

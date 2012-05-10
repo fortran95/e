@@ -5,6 +5,7 @@ def tuple_join(tp):
         r += str(i)
     return r
 def pgp_translator(pgpinfo):
+    retdict = {'text':'','valuable':False,'sign':False}
     """
     [GNUPG:] ENC_TO 7F1DBD1EC2218D71 16 0
 [GNUPG:] USERID_HINT 7F1DBD1EC2218D71 benchmark
@@ -35,7 +36,21 @@ def pgp_translator(pgpinfo):
         elif a[1] == 'PLAINTEXT_LENGTH':
             ret += '[GPG] 明文长度确认为 %s 字节\n' % a[2]
         elif a[1] == 'GOODSIG':
-            ret += '[GPG] 发送者签名找到，来自：\n  %s\n' % tuple_join(a[3:])
+            ret += '[GPG] 发现签名，来自：\n  %s\n' % tuple_join(a[3:])
         elif a[1] == 'VALIDSIG':
             ret += '[GPG] 签名确认有效！\n'
-    return ret
+            retdict['sign'] = True
+        elif a[1] == 'DECRYPTION_OKAY':
+            ret += '[GPG] 解密成功\n'
+        elif a[1] == 'BEGIN_DECRYPTION':
+            retdict['valuable'] = True
+        elif a[1] == 'END_DECRYPTION':
+            ret += '[GPG] 解密完毕\n'
+        elif a[1] == 'NODATA':
+            ret += '[GPG] 未发现数据\n'
+            retdict['valuable'] = False
+            break
+        #else:
+        #    print l
+    retdict['text'] = ret
+    return retdict

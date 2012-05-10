@@ -76,7 +76,7 @@ def load_new_key(keyinf):
     keyinf = keyinf[2:]
     # Write down to file
     f = open("tempinfo_readkey","w+")
-    f.write(keyinf)
+    f.write(keyinf)#[0:30] + '000' * 10 + keyinf[-30:])#keyinf)
     f.close()
     # fire PGP to decrypt & verify
     pgpsaid = ''
@@ -91,11 +91,22 @@ def load_new_key(keyinf):
     f.close()
     os.remove("tempinfo_readkey_status")
     # Figure out what PGP said.
-    print '--------------------------'
-    print struct.unpack('72sf8s',content)
-    print '--------------------------'
-    # Ask for user's opinion.
-    loadKey(pgp_translator(pgpsaid))
+    pgptrans = pgp_translator(pgpsaid)
+    if pgptrans['valuable'] == False:
+        print "Received data worths nothing. Exit."
+        return False
+    try:
+        keyinfo = struct.unpack('72sf8s',content)
+        # Ask for user's opinion.
+        accept = (loadKey(pgptrans) == 1)
+        if not accept:
+            print "User rejected this key."
+            return False
+    except ex:
+        print "Unexcepted letter of transfer key."
+        return False
+    # Accept and save this.
+    print "TODO: SAVE THE KEY."
 if __name__ == '__main__':
     def ks_send(keys):
         return keySelect(keys,title='',description='即将签署一个新生成的通讯中继密钥。\n请选择您想要使用的PGP身份认证密钥。\n')
