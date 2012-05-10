@@ -1,6 +1,8 @@
-import os,re,struct,time
+# -*- coding: UTF-8 -*-
+import os,re,struct,time,subprocess
 from ewindows import *
 from esymmetric import *
+from epgptranslator import *
 
 def gpg_get_keys(command='--list-secret-keys',prefix='sec'):
     keylist = os.popen('gpg2 %s' % command)
@@ -57,21 +59,46 @@ def send_new_key(keyselect_send,keyselect_recv):
     tkeyid = tkey[0]
     letter = struct.pack('72sf8s',engine.key,time.time(),mykeyid)
     # Fire PGP to sign and encrypt the letter.
-    f = open("tempinfo","w+")
+    f = open("tempinfo_newkey","w+")
     f.write(letter)
     f.close()
-    os.popen("gpg2 --armor --default-key 0x%s --recipient 0x%s -q -es tempinfo" % (mykeyid, tkeyid))
-    os.remove("tempinfo")
+    os.popen("gpg2 --default-key 0x%s --recipient 0x%s -q -es tempinfo_newkey" % (mykeyid, tkeyid))
+    os.remove("tempinfo_newkey")
     #print letter
-    f = open("tempinfo.asc","r")
+    f = open("tempinfo_newkey.gpg","r")
     inf = f.read()
     f.close()
-    os.remove("tempinfo.asc")
-    return inf
-
+    os.remove("tempinfo_newkey.gpg")
+    return 'SK' + inf
+def load_new_key(keyinf):
+    if keyinf[0:2] != 'SK':
+        return False
+    keyinf = keyinf[2:]
+    # Write down to file
+    f = open("tempinfo_readkey","w+")
+    f.write(keyinf)
+    f.close()
+    # fire PGP to decrypt & verify
+    pgpsaid = ''
+    content = ''
+    pipe = os.popen("gpg2 --status-file tempinfo_readkey_status --decrypt tempinfo_readkey")
+    content = pipe.read()
+    pipe.close()
+    os.remove("tempinfo_readkey")
+    # Read PGP status
+    f = open("tempinfo_readkey_status","r")
+    pgpsaid = f.read()
+    f.close()
+    os.remove("tempinfo_readkey_status")
+    # Figure out what PGP said.
+    print '--------------------------'
+    print struct.unpack('72sf8s',content)
+    print '--------------------------'
+    # Ask for user's opinion.
+    loadKey(pgp_translator(pgpsaid))
 if __name__ == '__main__':
     def ks_send(keys):
-        return keySelect(keys,title='',description='You are going to sign a new transfer-key.\nPlease select the identifing PGP secret key that you want to use.\n')
+        return keySelect(keys,title='',description='即将签署一个新生成的通讯中继密钥。\n请选择您想要使用的PGP身份认证密钥。\n')
     def ks_recv(keys):
-        return keySelect(keys,title='',description='Choose your recipient\'s key.')
-    print send_new_key(ks_send,ks_recv)
+        return keySelect(keys,title='',description='请选择接收者的身份公钥。')
+    load_new_key(send_new_key(ks_send,ks_recv))
