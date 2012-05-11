@@ -83,7 +83,7 @@ def load_new_key(keyinf):
         if not accept:
             print "User rejected this key."
             return False
-    except ex:
+    except:
         print "Unexcepted letter of transfer key."
         return False
     # Accept and save this.

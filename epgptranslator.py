@@ -47,8 +47,8 @@ def pgp_translator(pgpinfo):
             retdict['valuable'] = True
         elif a[1] == 'END_DECRYPTION':
             ret += '[GPG] 解密完毕\n'
-        elif a[1] == 'NODATA':
-            ret += '[GPG] 未发现数据\n'
+        elif a[1] in ('NODATA','NO_SECKEY','DECRYPTED_FAILED'):
+            ret += '[GPG] 无法完成解密和验证\n'
             retdict['valuable'] = False
             break
         elif a[1][0:6] == 'TRUST_':
