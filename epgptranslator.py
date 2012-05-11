@@ -5,7 +5,7 @@ def tuple_join(tp):
         r += str(i)
     return r
 def pgp_translator(pgpinfo):
-    retdict = {'text':'','valuable':False,'sign':False}
+    retdict = {'text':'','valuable':False,'sign':False,'sender':''}
     """
     [GNUPG:] ENC_TO 7F1DBD1EC2218D71 16 0
 [GNUPG:] USERID_HINT 7F1DBD1EC2218D71 benchmark
@@ -40,6 +40,7 @@ def pgp_translator(pgpinfo):
         elif a[1] == 'VALIDSIG':
             ret += '[GPG] 签名确认有效！\n'
             retdict['sign'] = True
+            retdict['sender'] = a[2]
         elif a[1] == 'DECRYPTION_OKAY':
             ret += '[GPG] 解密成功\n'
         elif a[1] == 'BEGIN_DECRYPTION':

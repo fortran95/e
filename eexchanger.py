@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import os,re,struct,time,subprocess
+import os,re,struct,time,subprocess,shelve
 from ewindows import *
 from esymmetric import *
 from epgptranslator import *
@@ -57,7 +57,7 @@ def send_new_key(keyselect_send,keyselect_recv):
     # Write a letter
     mykeyid = mykey[0]
     tkeyid = tkey[0]
-    letter = struct.pack('72sf8s',engine.key,time.time(),mykeyid)
+    letter = struct.pack('72sf',engine.key,time.time())
     # Fire PGP to sign and encrypt the letter.
     f = open("tempinfo_newkey","w+")
     f.write(letter)
@@ -72,6 +72,7 @@ def send_new_key(keyselect_send,keyselect_recv):
     return 'SK' + inf
 def load_new_key(keyinf):
     if keyinf[0:2] != 'SK':
+        print "Seems not a transfer key. Cancelled."
         return False
     keyinf = keyinf[2:]
     # Write down to file
@@ -96,7 +97,8 @@ def load_new_key(keyinf):
         print "Received data worths nothing. Exit."
         return False
     try:
-        keyinfo = struct.unpack('72sf8s',content)
+        keyinfo = struct.unpack('72sf',content)
+        keyfingerprint = hashlib.sha512(keyinfo[0]).hexdigest()
         # Ask for user's opinion.
         accept = (loadKey(pgptrans) == 1)
         if not accept:
@@ -106,7 +108,15 @@ def load_new_key(keyinf):
         print "Unexcepted letter of transfer key."
         return False
     # Accept and save this.
-    print "TODO: SAVE THE KEY."
+    kd = shelve.open("symkeys.db",writeback=True)
+    if kd.has_key(keyfingerprint):
+        print "But the key with same fingerprint already exists!"
+        return False
+    else:
+        kd[keyfingerprint] = {'timestamp':keyinfo[1],'key':keyinfo[0],'sender':pgptrans['sender']}
+    kd.close()
+    print 'New key accepted and stored.'
+    return True
 if __name__ == '__main__':
     def ks_send(keys):
         return keySelect(keys,title='',description='即将签署一个新生成的通讯中继密钥。\n请选择您想要使用的PGP身份认证密钥。\n')
