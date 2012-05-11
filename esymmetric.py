@@ -115,10 +115,30 @@ def list_all_keys():
     #  - Advice: 1) Should discard 2) Should avoid using
     #  - Where did we received it, and how was that trusted.
     #    or, to whom we have sent this key.
-    gpg_private_keys = gpg_get_keys()
-    gpg_public_keys = gpg_get_keys(command='--list-public-keys',prefix='pub')
-    
-    pass
+    #gpg_private_keys = gpg_get_keys()
+    #gpg_public_keys = gpg_get_keys(command='--list-public-keys',prefix='pub')
+    symkeys = shelve.open('symkeys.db')
+    ret = {}
+    for key_fingerprint in symkeys:
+        keyinfo = symkeys[key_fingerprint]
+        group_id = ''
+        if keyinfo['sender'] == '':# This is a key we sent to others.
+            group_id = keyinfo['receiver']
+        else:   # This is a key we received from other.
+            group_id = keyinfo['sender']
+        
+        this_keyinfo = {'key':keyinfo['key'],'trust':keyinfo['trust'],'timestamp':keyinfo['timestamp']}
+        
+        if ret.has_key(group_id):
+            ret[group_id]['keys'][key_fingerprint] = this_keyinfo
+        else:
+            ret[group_id] = {'keys':{key_fingerprint:this_keyinfo}}
+    for group_id in ret:
+        for key_fingerprint in ret[group_id]['keys']:
+            # TODO check usability.
+            pass
+    print ret
+    return ret
 if __name__ == '__main__':
     list_all_keys()
     
