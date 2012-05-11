@@ -57,7 +57,9 @@ def send_new_key(keyselect_send,keyselect_recv):
     # Write a letter
     mykeyid = mykey[0]
     tkeyid = tkey[0]
-    letter = struct.pack('72sf',engine.key,time.time())
+    key_fingerprint = hashlib.sha512(engine.key).hexdigest()
+    key_timestamp = time.time()
+    letter = struct.pack('72sf',engine.key,key_timestamp)
     # Fire PGP to sign and encrypt the letter.
     f = open("tempinfo_newkey","w+")
     f.write(letter)
@@ -69,6 +71,15 @@ def send_new_key(keyselect_send,keyselect_recv):
     inf = f.read()
     f.close()
     os.remove("tempinfo_newkey.gpg")
+    # before returning, we have to store this key for ourselve.
+    kd = shelve.open("symkeys.db",writeback=True)
+    if kd.has_key(key_fingerprint):
+        print "Oops! Aren\'t we randomized thoroughly? The key with same fingerprint already exists!"
+        return False
+    else:
+        kd[key_fingerprint] = {'timestamp':key_timestamp,'key':engine.key,'sender':'','receiver':tkeyid}
+    kd.close()
+    # return now.
     return 'SK' + inf
 def load_new_key(keyinf):
     if keyinf[0:2] != 'SK':
