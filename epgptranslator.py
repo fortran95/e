@@ -2,10 +2,10 @@
 def tuple_join(tp):
     r = ''
     for i in tp:
-        r += str(i)
-    return r
+        r += ' ' + str(i)
+    return r.strip()
 def pgp_translator(pgpinfo):
-    retdict = {'text':'','valuable':False,'sign':False,'sender':''}
+    retdict = {'text':'','valuable':False,'sign':False,'sender':'','trust':0}
     """
     [GNUPG:] ENC_TO 7F1DBD1EC2218D71 16 0
 [GNUPG:] USERID_HINT 7F1DBD1EC2218D71 benchmark
@@ -30,7 +30,7 @@ def pgp_translator(pgpinfo):
         if a[1] == 'ENC_TO':
             ret += '[GPG] 收件人ID：%s\n' % a[2]
         elif a[1] == 'USERID_HINT':
-            ret += '[GPG] 收件人为：\n  %s\n' % a[3]
+            ret += '[GPG] 收件人为：\n  %s\n' % tuple_join(a[3:])
         elif a[1] == 'PLAINTEXT':
             ret += '[GPG] 已经解密，明文输出开始\n'
         elif a[1] == 'PLAINTEXT_LENGTH':
@@ -51,7 +51,9 @@ def pgp_translator(pgpinfo):
             ret += '[GPG] 未发现数据\n'
             retdict['valuable'] = False
             break
-        #else:
-        #    print l
+        elif a[1][0:6] == 'TRUST_':
+            retdict['trust'] = {'UNDEFINED':-1,'NEVER':0,'MARGINAL':1,'FULLY':2,'ULTIMATE':3}[a[1][6:]]
+        else:
+            print "gpgtranslator: %s" % l
     retdict['text'] = ret
     return retdict

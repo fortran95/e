@@ -1,6 +1,37 @@
-import random,hashlib,hmac,M2Crypto
+import random,hashlib,hmac,M2Crypto,shelve,os
 from Crypto.Cipher import *
-
+def gpg_get_keys(command='--list-secret-keys',prefix='sec'):
+    keylist = os.popen('gpg2 %s' % command)
+    readbegin = False
+    
+    keyid = ''
+    keydate = ''
+    keydes = ''
+    
+    keys = []
+    while True: #fire GPG to list all secret keys
+        l = keylist.readline()
+        if l == '':
+            break
+        else:
+            if l[0:3] == prefix:
+                readbegin = True
+            if readbegin:
+                if l == '\n':
+                    readbegin = False
+                    # dumpbuffer
+                    keys.append([keyid,keydate,keydes])
+                    keyid = ''
+                    keydate = ''
+                    keydes = ''
+                # Fetch info for each key.
+                if l[0:3] == prefix:
+                    keypar = l[3:].strip().split(' ')
+                    keyid = keypar[0][-8:]
+                    keydate = keypar[1]
+                elif l[0:3] == 'uid':
+                    keydes += l[3:].strip()
+    return keys
 class symmetric(object):
     version = 0.0
     key = ''
@@ -76,8 +107,18 @@ class symmetric(object):
             return False
         else:
             return input
-
+def list_all_keys():
+    # Aims at listing all possible transfer-keys.
+    # These info should be provided.
+    #  - Key ID
+    #  - Timestamp
+    #  - Advice: 1) Should discard 2) Should avoid using
+    #  - Where did we received it, and how was that trusted.
+    #    or, to whom we have sent this key.
+    gpg_private_keys = gpg_get_keys()
+    gpg_public_keys = gpg_get_keys(command='--list-public-keys',prefix='pub')
+    
+    pass
 if __name__ == '__main__':
-    s = symmetric()
-    assert(s.decrypt(s.encrypt('hello')),'hello')
+    list_all_keys()
     

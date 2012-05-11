@@ -4,38 +4,6 @@ from ewindows import *
 from esymmetric import *
 from epgptranslator import *
 
-def gpg_get_keys(command='--list-secret-keys',prefix='sec'):
-    keylist = os.popen('gpg2 %s' % command)
-    readbegin = False
-    
-    keyid = ''
-    keydate = ''
-    keydes = ''
-    
-    keys = []
-    while True: #fire GPG to list all secret keys
-        l = keylist.readline()
-        if l == '':
-            break
-        else:
-            if l[0:3] == prefix:
-                readbegin = True
-            if readbegin:
-                if l == '\n':
-                    readbegin = False
-                    # dumpbuffer
-                    keys.append([keyid,keydate,keydes])
-                    keyid = ''
-                    keydate = ''
-                    keydes = ''
-                # Fetch info for each key.
-                if l[0:3] == prefix:
-                    keypar = l[3:].strip().split(' ')
-                    keyid = keypar[0][-8:]
-                    keydate = keypar[1]
-                elif l[0:3] == 'uid':
-                    keydes += l[3:].strip()
-    return keys
 def send_new_key(keyselect_send,keyselect_recv):
     # This will use console as interface.
     #  first, ask for receiver's id.
@@ -77,7 +45,7 @@ def send_new_key(keyselect_send,keyselect_recv):
         print "Oops! Aren\'t we randomized thoroughly? The key with same fingerprint already exists!"
         return False
     else:
-        kd[key_fingerprint] = {'timestamp':key_timestamp,'key':engine.key,'sender':'','receiver':tkeyid}
+        kd[key_fingerprint] = {'timestamp':key_timestamp,'key':engine.key,'sender':'','receiver':tkeyid,'trust':3}
     kd.close()
     # return now.
     return 'SK' + inf
@@ -124,7 +92,10 @@ def load_new_key(keyinf):
         print "But the key with same fingerprint already exists!"
         return False
     else:
-        kd[keyfingerprint] = {'timestamp':keyinfo[1],'key':keyinfo[0],'sender':pgptrans['sender']}
+        #print "Trying to get sender info: %s" % pgptrans['sender']
+        gpginfo = gpg_get_keys('--list-keys %s' % pgptrans['sender'], prefix='pub')
+        
+        kd[keyfingerprint] = {'timestamp':keyinfo[1],'key':keyinfo[0],'sender':gpginfo[0][0],'trust':pgptrans['trust']}
     kd.close()
     print 'New key accepted and stored.'
     return True
