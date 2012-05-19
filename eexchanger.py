@@ -1,10 +1,13 @@
 # -*- coding: UTF-8 -*-
-import os,re,struct,time,subprocess,shelve
+import os,sys,re,struct,time,subprocess,shelve
 from ewindows import *
 from esymmetric import *
 from epgptranslator import *
 
+BASEPATH = os.path.dirname(sys.argv[0]) + '/'
+
 def send_new_key(keyselect_send,keyselect_recv):
+    global BASEPATH
     # This will use console as interface.
     #  first, ask for receiver's id.
     mykeys = gpg_get_keys()
@@ -41,7 +44,7 @@ def send_new_key(keyselect_send,keyselect_recv):
     f.close()
     os.remove("tempinfo_newkey.gpg")
     # before returning, we have to store this key for ourselve.
-    kd = shelve.open("symkeys.db",writeback=True)
+    kd = shelve.open(BASEPATH + "symkeys.db",writeback=True)
     if kd.has_key(key_fingerprint):
         print "Oops! Aren\'t we randomized thoroughly? The key with same fingerprint already exists!"
         return False
@@ -51,6 +54,7 @@ def send_new_key(keyselect_send,keyselect_recv):
     # return now.
     return 'SK' + inf
 def load_new_key(keyinf):
+    global BASEPATH
     if keyinf[0:2] != 'SK':
         print "Seems not a transfer key. Cancelled."
         return False
@@ -89,7 +93,7 @@ def load_new_key(keyinf):
         print "Unexcepted letter of transfer key."
         return False
     # Accept and save this.
-    kd = shelve.open("symkeys.db",writeback=True)
+    kd = shelve.open(BASEPATH + "symkeys.db",writeback=True)
     if kd.has_key(keyfingerprint):
         print "But the key with same fingerprint already exists!"
         return False

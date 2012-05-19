@@ -1,5 +1,8 @@
-import random,hashlib,hmac,M2Crypto,shelve,os,ConfigParser,time,base64
+import random,hashlib,hmac,M2Crypto,shelve,os,sys,ConfigParser,time,base64
 from Crypto.Cipher import *
+
+BASEPATH = os.path.dirname(sys.argv[0]) + '/'
+
 def gpg_get_keys(command='--list-secret-keys',prefix='sec'):
     keylist = os.popen('gpg2 %s' % command)
     readbegin = False
@@ -108,6 +111,7 @@ class symmetric(object):
         else:
             return input
 def list_all_keys():
+    global BASEPATH
     # Aims at listing all possible transfer-keys.
     # These info should be provided.
     #  - Key ID
@@ -117,9 +121,9 @@ def list_all_keys():
     #    or, to whom we have sent this key.
     #gpg_private_keys = gpg_get_keys()
     #gpg_public_keys = gpg_get_keys(command='--list-public-keys',prefix='pub')
-    symkeys = shelve.open('symkeys.db',writeback=True)
+    symkeys = shelve.open(BASEPATH + 'symkeys.db',writeback=True)
     config = ConfigParser.ConfigParser()
-    config.read('e.conf')
+    config.read(BASEPATH + 'e.conf')
 
     tkey_life = config.getint('TransferKey Rules','life')
     tkey_old = config.getfloat('TransferKey Rules','old')
