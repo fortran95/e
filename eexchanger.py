@@ -4,7 +4,9 @@ from ewindows import *
 from esymmetric import *
 from epgptranslator import *
 
-BASEPATH = os.path.dirname(sys.argv[0]) + '/'
+BASEPATH = os.path.dirname(sys.argv[0])
+if BASEPATH != '':
+    BASEPATH += '/'
 
 def send_new_key(keyselect_send,keyselect_recv):
     global BASEPATH

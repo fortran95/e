@@ -1,7 +1,9 @@
 import random,hashlib,hmac,M2Crypto,shelve,os,sys,ConfigParser,time,base64
 from Crypto.Cipher import *
 
-BASEPATH = os.path.dirname(sys.argv[0]) + '/'
+BASEPATH = os.path.dirname(sys.argv[0])
+if BASEPATH != '':
+    BASEPATH += '/'
 
 def gpg_get_keys(command='--list-secret-keys',prefix='sec'):
     keylist = os.popen('gpg2 %s' % command)
@@ -121,6 +123,7 @@ def list_all_keys():
     #    or, to whom we have sent this key.
     #gpg_private_keys = gpg_get_keys()
     #gpg_public_keys = gpg_get_keys(command='--list-public-keys',prefix='pub')
+    
     symkeys = shelve.open(BASEPATH + 'symkeys.db',writeback=True)
     config = ConfigParser.ConfigParser()
     config.read(BASEPATH + 'e.conf')
@@ -208,4 +211,5 @@ def read_message(message):
     except:
         pass
 if __name__ == '__main__':
-    print read_message(send_message('7BC95BF8','test string'))
+    print list_all_keys()
+    #print read_message(send_message('7BC95BF8','test string'))
