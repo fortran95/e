@@ -25,7 +25,8 @@ def send_new_key(keyselect_send,keyselect_recv):
     # Write a letter
     mykeyid = mykey[0]
     tkeyid = tkey[0]
-    key_fingerprint = hashlib.sha512(engine.key).hexdigest()
+    key_hmackey = hashlib.sha512(engine.key).digest()
+    key_fingerprint = hashlib.sha1(key_hmackey).hexdigest()
     key_timestamp = time.time()
     letter = struct.pack('72sf',engine.key,key_timestamp)
     # Fire PGP to sign and encrypt the letter.
@@ -45,7 +46,7 @@ def send_new_key(keyselect_send,keyselect_recv):
         print "Oops! Aren\'t we randomized thoroughly? The key with same fingerprint already exists!"
         return False
     else:
-        kd[key_fingerprint] = {'timestamp':key_timestamp,'key':engine.key,'sender':'','receiver':tkeyid,'trust':3}
+        kd[key_fingerprint] = {'timestamp':key_timestamp,'key':engine.key,'sender':'','receiver':tkeyid,'trust':3,'hmackey':key_hmackey}
     kd.close()
     # return now.
     return 'SK' + inf
@@ -77,7 +78,8 @@ def load_new_key(keyinf):
         return False
     try:
         keyinfo = struct.unpack('72sf',content)
-        keyfingerprint = hashlib.sha512(keyinfo[0]).hexdigest()
+        keyhmackey = hashlib.sha512(keyinfo[0]).digest()
+        keyfingerprint = hashlib.sha1(keyinfo[0]).hexdigest()
         # Ask for user's opinion.
         accept = (loadKey(pgptrans) == 1)
         if not accept:
@@ -95,7 +97,7 @@ def load_new_key(keyinf):
         #print "Trying to get sender info: %s" % pgptrans['sender']
         gpginfo = gpg_get_keys('--list-keys %s' % pgptrans['sender'], prefix='pub')
         
-        kd[keyfingerprint] = {'timestamp':keyinfo[1],'key':keyinfo[0],'sender':gpginfo[0][0],'trust':pgptrans['trust']}
+        kd[keyfingerprint] = {'timestamp':keyinfo[1],'key':keyinfo[0],'sender':gpginfo[0][0],'trust':pgptrans['trust'],'hmackey':keyhmackey}
     kd.close()
     print 'New key accepted and stored.'
     return True

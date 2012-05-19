@@ -1,4 +1,4 @@
-import random,hashlib,hmac,M2Crypto,shelve,os
+import random,hashlib,hmac,M2Crypto,shelve,os,ConfigParser,time,base64
 from Crypto.Cipher import *
 def gpg_get_keys(command='--list-secret-keys',prefix='sec'):
     keylist = os.popen('gpg2 %s' % command)
@@ -117,28 +117,91 @@ def list_all_keys():
     #    or, to whom we have sent this key.
     #gpg_private_keys = gpg_get_keys()
     #gpg_public_keys = gpg_get_keys(command='--list-public-keys',prefix='pub')
-    symkeys = shelve.open('symkeys.db')
+    symkeys = shelve.open('symkeys.db',writeback=True)
+    config = ConfigParser.ConfigParser()
+    config.read('e.conf')
+
+    tkey_life = config.getint('TransferKey Rules','life')
+    tkey_old = config.getfloat('TransferKey Rules','old')
+    if tkey_old <= 0 or tkey_old > 1:
+        print "Invalid configured: TransferKey Rules->old, should be (0,1)."
+        return False
+    if tkey_life <= 180:
+        print "Invalid configured: TransferKey Rules->life, should > 180."
+        return False
+    tkey_old = tkey_old * tkey_life
+    now = time.time()
+
     ret = {}
     for key_fingerprint in symkeys:
         keyinfo = symkeys[key_fingerprint]
         group_id = ''
+        
+        # The following is of EXTREMELY importance in understanding the protocol
         if keyinfo['sender'] == '':# This is a key we sent to others.
             group_id = keyinfo['receiver']
         else:   # This is a key we received from other.
             group_id = keyinfo['sender']
         
-        this_keyinfo = {'key':keyinfo['key'],'trust':keyinfo['trust'],'timestamp':keyinfo['timestamp']}
+        this_keyinfo = {'key':keyinfo['key'],'trust':keyinfo['trust'],'timestamp':keyinfo['timestamp'],'old':True}
         
         if ret.has_key(group_id):
             ret[group_id]['keys'][key_fingerprint] = this_keyinfo
         else:
             ret[group_id] = {'keys':{key_fingerprint:this_keyinfo}}
     for group_id in ret:
+        has_new_key = False
+        has_key = False
         for key_fingerprint in ret[group_id]['keys']:
             # TODO check usability.
-            pass
-    print ret
+            if now - ret[group_id]['keys'][key_fingerprint]['timestamp'] < tkey_life:
+                has_key = True
+                if now - ret[group_id]['keys'][key_fingerprint]['timestamp'] < tkey_old:
+                    has_new_key = True
+                    ret[group_id]['keys'][key_fingerprint]['old'] = False
+            else:
+                # Expired keys will lost its info.
+                ret[group_id]['keys'][key_fingerprint]['key'] = ''
+                symkeys[key_fingerprint]['key'] = ''
+        ret[group_id]['has_new_key'] = has_new_key
+        ret[group_id]['has_key'] = has_key
     return ret
+def send_message(keyID,message):
+    # Use sym key to send a message. Receiver is one of the public key ID.
+    allkeys = list_all_keys()
+    if allkeys.has_key(keyID) == False:
+        print "Invalid parameter when sending message: [%s] is unknown. You may try exchange a key with it." % keyID
+        return False
+    selected_group = allkeys[keyID]
+    if selected_group['has_new_key'] == False:
+        print "You need to exchange a key to [%s] first." % keyID
+        return False
+    for keyid in selected_group['keys']:
+        if selected_group['keys'][keyid]['old'] == False:
+            break
+    selectedkey = selected_group['keys'][keyid]
+    print "Found a proper key [FINGERPRINT:%s]. Will use this to encrypt." % keyid
+    encryptor = symmetric(selectedkey['key'])
+    message = keyid + '\n' + base64.encodestring(encryptor.encrypt(message))
+    return message
+def read_message(message):
+    try:
+        keyid = message[0:40].strip()
+        message = base64.decodestring(message[40:].strip())
+        allkeys = list_all_keys()
+        decrypted = False
+        for gid in allkeys:
+            if allkeys[gid]['keys'].has_key(keyid):
+                foundkey = allkeys[gid]['keys'][keyid]
+                if foundkey['key'] != '':
+                    decryptor = symmetric(foundkey['key'])
+                    decrypted = decryptor.decrypt(message)
+                else:
+                    print "Cannot decrypt the message, key expired."
+                break
+        if decrypted != False:
+            return {'keyID':gid,'message':decrypted}
+    except:
+        pass
 if __name__ == '__main__':
-    list_all_keys()
-    
+    print read_message(send_message('7BC95BF8','test string'))

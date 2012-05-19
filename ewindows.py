@@ -102,6 +102,7 @@ def loadKey(info):
     root = Tk()
     root.title("收到新的密钥")
     app = LoadingKeyDialog(root,screeninfo=info['text'],valid=info['sign'],trustlevel=info['trust'])
+    root.resizable(0,0)
     root.mainloop()
     root.destroy()
     return dlgReturn

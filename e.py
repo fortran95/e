@@ -11,16 +11,19 @@ op.add_option("-i","--input",action="store",dest="input",default=False,help="Set
 op.add_option("-o","--output",action="store",dest="output",default=False,help="Set output file.")
 op.add_option('-n','--new',action='store_true',dest='new',default=False,help='Generate a new SYMKEY when -s/--symmetric provided.')
 
-group_symmetric = OptionGroup(op,'Symmetric Cipher Services','Provides symmetric encrypting and decrypting services.')
-group_symmetric.add_option('-s','--symmetric',action='store_true',dest='symmetric',default=False,help='Tell me you are going to use functions under this service group.')
-group_symmetric.add_option('-l','--load-key',action='store_true',dest='loadkey',default=False,help='Load a new key from the file specified with --input.')
+group_symmetric = OptionGroup(op,'Key Exchange Services','Provides authenticated symmetric-key exchanging service.')
+group_symmetric.add_option('-e','--exchange',action='store_true',dest='exchange',default=False,help="Tell me you are going to use this functions")
+group_symmetric.add_option('-l','--load-key',action='store_true',dest='loadkey',default=False,help="Load a new key from the file specified with --input.")
+
+group_transfer = OptionGroup(op,'Symmetric Encryption Service','Provides encrypt/decrypt service with previously exchanged keys.')
+group_transfer.add_option('-s','--symmetric',action='store_true',dest='symmetric',default=False,help="Tell me you're going to use this function.")
 
 op.add_option_group(group_symmetric)
 
 (options,args) = op.parse_args()
 
 # Read verbose.
-if options.symmetric == True:
+if options.exchange == True:
     #print "Will do symmetric jobs."
     if options.new == True:
         if options.output == False:
