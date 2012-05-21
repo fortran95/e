@@ -78,6 +78,7 @@ class ChoosingDialog(Frame):
             def onClick(self,root=self,kid=keys.index(k)):
                 global dlgReturn
                 dlgReturn = kid
+                print dlgReturn
                 root.quit()
             b.bind('<Button-1>',onClick)
             b["width"] = 60

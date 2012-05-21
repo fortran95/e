@@ -211,5 +211,5 @@ def read_message(message):
     except:
         pass
 if __name__ == '__main__':
-    print list_all_keys()
-    #print read_message(send_message('7BC95BF8','test string'))
+    #print list_all_keys()
+    print read_message(send_message('7BC95BF8','test string'))
